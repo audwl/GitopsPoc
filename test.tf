@@ -81,7 +81,7 @@ resource "aws_iam_role_policy_attachment" "ec2_container_registry_read_only" {
 
 # EC2 인스턴스를 위한 IAM 인스턴스 프로파일
 resource "aws_iam_instance_profile" "myungji_eks_admin_profile" {
-  name = "myungji-eks-admin-profile"
+  name = "myungji-eks-admin-profile-new"
   role = aws_iam_role.myungji_eks_admin_role.name
 }
 # EKS Node Group용 IAM 역할
