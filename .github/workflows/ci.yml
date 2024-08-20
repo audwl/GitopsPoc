@@ -28,8 +28,7 @@ jobs:
         run: |
           REPOSITORY_URI=213899591783.dkr.ecr.ap-northeast-2.amazonaws.com/petclinic
           IMAGE_TAG=latest
-          docker build -t $REPOSITORY_URI:$IMAGE_TAG .
-          docker push $REPOSITORY_URI:$IMAGE_TAG
+          docker buildx build --platform linux/amd64,linux/arm64 -t $REPOSITORY_URI:$IMAGE_TAG --push .
 
       - name: Output image digest
         run: echo "Image Digest: ${{ steps.build-image.outputs.digest }}"
