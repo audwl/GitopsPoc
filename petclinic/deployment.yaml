@@ -4,7 +4,7 @@ metadata:
   name: petclinic
   namespace: default
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: petclinic
@@ -15,7 +15,6 @@ spec:
     spec:
       containers:
       - name: petclinic
-        image: 213899591783.dkr.ecr.ap-northeast-3.amazonaws.com/gitops-repo:latest
+        image: 213899591783.dkr.ecr.ap-northeast-3.amazonaws.com/gitops-repo:8982e04ff103188a78f6eb9570a76cf5bbe77478
         ports:
         - containerPort: 8080
-      
