@@ -237,32 +237,56 @@ resource "aws_instance" "kubectl_instance" {
   }
 
   user_data = <<-EOF
-            #!/bin/bash
-            yum update -y
-            yum install -y aws-cli jq
-            
-            curl -o /usr/local/bin/kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
-            chmod +x /usr/local/bin/kubectl
-            
-            mkdir -p /home/ec2-user/.kube
-            export AWS_DEFAULT_REGION=ap-northeast-2
+              #!/bin/bash
+              exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+              echo "Starting user data script execution"
+              
+              # 시스템 업데이트 및 필요한 패키지 설치
+              echo "Updating system and installing necessary packages"
+              apt-get update && apt-get upgrade -y
+              apt-get install -y unzip curl wget
 
-            RETRY_COUNT=0
-            MAX_RETRIES=5
-            while [ ! -f /home/ec2-user/.kube/config ] && [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-                aws eks --region ap-northeast-2 update-kubeconfig --name myungji-eks-cluster --role-arn ${aws_iam_role.myungji_eks_admin_role.arn} --kubeconfig /home/ec2-user/.kube/config
-                RETRY_COUNT=$((RETRY_COUNT+1))
-                if [ ! -f /home/ec2-user/.kube/config ]; then
-                    echo "Retrying in 30 seconds..."
-                    sleep 30
-                fi
-            done
-            
-            chown -R ec2-user:ec2-user /home/ec2-user/.kube
-            chmod 600 /home/ec2-user/.kube/config
-            echo "export KUBECONFIG=/home/ec2-user/.kube/config" >> /home/ec2-user/.bashrc
-            source /home/ec2-user/.bashrc
-            EOF
+              echo "Installing AWS CLI"
+              # AWS CLI 최신 버전 설치
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip awscliv2.zip
+              ./aws/install
+              rm -rf awscliv2.zip aws/
+
+              echo "Installing kubectl"
+              # kubectl 최신 버전 설치
+              curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+              chmod +x kubectl
+              mv kubectl /usr/local/bin/
+      
+              echo "Installing aws-iam-authenticator"
+              # aws-iam-authenticator 설치
+              curl -Lo aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.5.9/aws-iam-authenticator_0.5.9_linux_amd64
+              chmod +x aws-iam-authenticator
+              mv aws-iam-authenticator /usr/local/bin/
+      
+              echo "Configuring AWS CLI"
+              # AWS CLI 구성
+              mkdir -p /home/ubuntu/.aws
+              echo "[default]" > /home/ubuntu/.aws/config
+              echo "region = ${var.region}" >> /home/ubuntu/.aws/config
+      
+              echo "Configuring kubeconfig"
+              # kubeconfig 생성 및 업데이트
+              sudo -u ubuntu aws eks get-token --cluster-name ${var.cluster_name} --region ${var.region} > /dev/null 2>&1
+              sudo -u ubuntu aws eks update-kubeconfig --name ${var.cluster_name} --region ${var.region}
+      
+              echo "Setting permissions"
+              # 파일 권한 설정
+              chown -R ubuntu:ubuntu /home/ubuntu/.kube /home/ubuntu/.aws
+      
+              echo "Setting environment variables"
+              # 환경 변수 설정
+              echo "export KUBECONFIG=/home/ubuntu/.kube/config" >> /home/ubuntu/.bashrc
+      
+              echo "User data script execution completed"
+      EOF
+
 
 
 }
