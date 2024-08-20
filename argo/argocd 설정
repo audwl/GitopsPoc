@@ -1,0 +1,10 @@
+project: default
+source:
+  repoURL: https://github.com/audwl/GitopsPoc
+  path: petclinic
+  targetRevision: HEAD
+destination:
+  server: https://kubernetes.default.svc
+  namespace: petclinic
+syncPolicy:
+  automated: {}
