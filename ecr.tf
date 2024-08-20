@@ -1,4 +1,3 @@
-# ECR 리포지토리 생성
 resource "aws_ecr_repository" "petclinic_repo" {
   name = "petclinic-repo"
 
@@ -10,6 +9,7 @@ resource "aws_ecr_repository" "petclinic_repo" {
     Name = "petclinic-ecr-repo"
   }
 }
+
 
 # ECR에 대한 IAM 정책을 연결하는 역할
 resource "aws_iam_role_policy_attachment" "ecr_access" {
